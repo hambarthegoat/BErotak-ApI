@@ -25,11 +25,11 @@ func (s *Store) buatPeminjaman(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.bentrokDenganBlokir(p.SumberDayaID, p.Tanggal, p.SlotMulai, p.SlotSelesai) {
-		writeError(w, http.StatusConflict, pesanBentrokBlokir)
+		writeBentrok(w, pesanBentrokBlokir, []int{})
 		return
 	}
 	if s.kapasitasTerlampaui(p, sd.Stok) {
-		writeError(w, http.StatusConflict, pesanBentrokKapasitas)
+		writeBentrok(w, pesanBentrokKapasitas, s.idPenghalang(p))
 		return
 	}
 

@@ -19,6 +19,20 @@ func (s *Store) unitTerpakai(sumberDayaID int, tanggal string, slot, idPengecual
 	return total
 }
 
+func (s *Store) idPenghalang(p Peminjaman) []int {
+	ids := []int{}
+	for _, lain := range s.peminjaman {
+		if lain.ID == p.ID || lain.Status != statusAktif {
+			continue
+		}
+		if lain.SumberDayaID == p.SumberDayaID && lain.Tanggal == p.Tanggal &&
+			beririsan(p.SlotMulai, p.SlotSelesai, lain.SlotMulai, lain.SlotSelesai) {
+			ids = append(ids, lain.ID)
+		}
+	}
+	return ids
+}
+
 // peminjaman baru berid 0, jadi tidak ada yang dikecualikan
 func (s *Store) kapasitasTerlampaui(p Peminjaman, stok int) bool {
 	for slot := p.SlotMulai; slot <= p.SlotSelesai; slot++ {

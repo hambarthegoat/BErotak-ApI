@@ -18,6 +18,13 @@ func writeError(w http.ResponseWriter, status int, pesan string) {
 	writeJSON(w, status, map[string]string{"error": pesan})
 }
 
+func writeBentrok(w http.ResponseWriter, pesan string, bentrokDengan []int) {
+	writeJSON(w, http.StatusConflict, map[string]any{
+		"error":          pesan,
+		"bentrok_dengan": bentrokDengan,
+	})
+}
+
 func parseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
