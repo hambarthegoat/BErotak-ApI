@@ -1,0 +1,25 @@
+package main
+
+import (
+	"log"
+	"net/http"
+)
+
+func NewHandler() http.Handler {
+	s := NewStore()
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("POST /sumber-daya", s.buatSumberDaya)
+	mux.HandleFunc("GET /sumber-daya", s.daftarSumberDaya)
+	mux.HandleFunc("GET /sumber-daya/{id}", s.detailSumberDaya)
+
+	mux.HandleFunc("POST /peminjaman", s.buatPeminjaman)
+	mux.HandleFunc("GET /peminjaman", s.daftarPeminjaman)
+	mux.HandleFunc("GET /peminjaman/{id}", s.detailPeminjaman)
+
+	return mux
+}
+
+func main() {
+	log.Fatal(http.ListenAndServe(":8080", NewHandler()))
+}
