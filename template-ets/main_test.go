@@ -213,6 +213,66 @@ func TestPutDelete(t *testing.T) {
 	harapKode(t, kode, 201, "slot lepas setelah delete")
 }
 
+func TestBlokir(t *testing.T) {
+	h := handlerDenganRuang(t, "3")
+	kirim(t, h, "POST", "/peminjaman", bodyPinjam)           // id 1, slot 3-4
+	kirim(t, h, "POST", "/peminjaman", pinjamSlot("4", "5")) // id 2
+	kirim(t, h, "POST", "/peminjaman", pinjamSlot("7", "8")) // id 3
+
+	kode, _, _ := kirim(t, h, "POST", "/blokir", `{"sumber_daya_id":1,"tanggal":"2026-11-02","slot_mulai":2,"slot_selesai":3,"keterangan":" "}`)
+	harapKode(t, kode, 400, "keterangan kosong")
+	kode, _, _ = kirim(t, h, "POST", "/blokir", `{"sumber_daya_id":9,"tanggal":"2026-11-02","slot_mulai":2,"slot_selesai":3,"keterangan":"x"}`)
+	harapKode(t, kode, 400, "sumber daya tidak ada")
+
+	kode, _, raw := kirim(t, h, "POST", "/blokir", `{"sumber_daya_id":1,"tanggal":"2026-11-02","slot_mulai":4,"slot_selesai":4,"keterangan":"Servis"}`)
+	harapKode(t, kode, 201, "buat blokir")
+	var resp blokirResponse
+	json.Unmarshal([]byte(raw), &resp)
+	if len(resp.Dibatalkan) != 2 || resp.Dibatalkan[0] != 1 || resp.Dibatalkan[1] != 2 {
+		t.Fatalf("dibatalkan salah: %s", raw)
+	}
+	_, obj, _ := kirim(t, h, "GET", "/peminjaman/1", "")
+	if obj["status"] != "dibatalkan" {
+		t.Fatalf("status harus dibatalkan: %v", obj)
+	}
+	_, obj, _ = kirim(t, h, "GET", "/peminjaman/3", "")
+	if obj["status"] != "aktif" {
+		t.Fatalf("peminjaman di luar blokir harus tetap aktif: %v", obj)
+	}
+
+	kode, _, _ = kirim(t, h, "POST", "/blokir", `{"sumber_daya_id":1,"tanggal":"2026-11-02","slot_mulai":4,"slot_selesai":6,"keterangan":"Lain"}`)
+	harapKode(t, kode, 409, "blokir beririsan")
+	kode, _, _ = kirim(t, h, "POST", "/peminjaman", bodyPinjam)
+	harapKode(t, kode, 409, "peminjaman kena blokir")
+	kode, _, _ = kirim(t, h, "PUT", "/peminjaman/3", pinjamSlot("4", "4"))
+	harapKode(t, kode, 409, "put kena blokir")
+
+	kode, _, raw = kirim(t, h, "POST", "/blokir", `{"sumber_daya_id":1,"tanggal":"2026-12-01","slot_mulai":1,"slot_selesai":1,"keterangan":"Praktikum"}`)
+	harapKode(t, kode, 201, "blokir tanpa terdampak")
+	if !strings.Contains(raw, `"dibatalkan":[]`) {
+		t.Fatalf("dibatalkan harus []: %s", raw)
+	}
+
+	kode, _, _ = kirim(t, h, "DELETE", "/blokir/abc", "")
+	harapKode(t, kode, 400, "hapus id bukan angka")
+	kode, _, _ = kirim(t, h, "DELETE", "/blokir/99", "")
+	harapKode(t, kode, 404, "hapus tidak ada")
+	kode, _, _ = kirim(t, h, "DELETE", "/blokir/1", "")
+	harapKode(t, kode, 204, "hapus blokir")
+	kode, _, _ = kirim(t, h, "POST", "/peminjaman", bodyPinjam)
+	harapKode(t, kode, 201, "bisa dipinjam lagi")
+	_, obj, _ = kirim(t, h, "GET", "/peminjaman/1", "")
+	if obj["status"] != "dibatalkan" {
+		t.Fatalf("peminjaman tidak boleh pulih otomatis: %v", obj)
+	}
+	_, _, raw = kirim(t, h, "GET", "/blokir", "")
+	var daftar []Blokir
+	json.Unmarshal([]byte(raw), &daftar)
+	if len(daftar) != 1 || daftar[0].ID != 2 {
+		t.Fatalf("daftar blokir salah: %s", raw)
+	}
+}
+
 func TestBersamaan(t *testing.T) {
 	h := handlerDenganRuang(t, "1")
 	srv := httptest.NewServer(h)

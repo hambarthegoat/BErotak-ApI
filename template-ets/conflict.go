@@ -28,3 +28,29 @@ func (s *Store) kapasitasTerlampaui(p Peminjaman, stok int) bool {
 	}
 	return false
 }
+
+func (s *Store) bentrokDenganBlokir(sumberDayaID int, tanggal string, mulai, selesai int) bool {
+	for _, b := range s.blokir {
+		if b.SumberDayaID == sumberDayaID && b.Tanggal == tanggal &&
+			beririsan(mulai, selesai, b.SlotMulai, b.SlotSelesai) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Store) batalkanTerdampak(b Blokir) []int {
+	ids := []int{}
+	for i := range s.peminjaman {
+		p := &s.peminjaman[i]
+		if p.Status != statusAktif {
+			continue
+		}
+		if p.SumberDayaID == b.SumberDayaID && p.Tanggal == b.Tanggal &&
+			beririsan(p.SlotMulai, p.SlotSelesai, b.SlotMulai, b.SlotSelesai) {
+			p.Status = statusDibatalkan
+			ids = append(ids, p.ID)
+		}
+	}
+	return ids
+}

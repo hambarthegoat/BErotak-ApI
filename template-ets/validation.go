@@ -108,3 +108,27 @@ func (s *Store) validasiPeminjaman(in peminjamanInput) (Peminjaman, SumberDaya, 
 		Jumlah:       *in.Jumlah,
 	}, sd, ""
 }
+
+func (s *Store) validasiBlokir(in blokirInput) (Blokir, string) {
+	if in.SumberDayaID == nil {
+		return Blokir{}, "sumber_daya_id wajib diisi"
+	}
+	tanggal, pesan := validasiJadwal(in.Tanggal, in.SlotMulai, in.SlotSelesai)
+	if pesan != "" {
+		return Blokir{}, pesan
+	}
+	keterangan, pesan := validasiTeks(in.Keterangan, "keterangan", maxPanjangKet)
+	if pesan != "" {
+		return Blokir{}, pesan
+	}
+	if _, ada := s.cariSumberDaya(*in.SumberDayaID); !ada {
+		return Blokir{}, "sumber daya tidak ditemukan"
+	}
+	return Blokir{
+		SumberDayaID: *in.SumberDayaID,
+		Tanggal:      tanggal,
+		SlotMulai:    *in.SlotMulai,
+		SlotSelesai:  *in.SlotSelesai,
+		Keterangan:   keterangan,
+	}, ""
+}

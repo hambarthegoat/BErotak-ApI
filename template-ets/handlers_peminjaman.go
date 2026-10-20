@@ -5,7 +5,10 @@ import (
 	"strconv"
 )
 
-const pesanBentrokKapasitas = "kapasitas sumber daya terlampaui pada salah satu slot"
+const (
+	pesanBentrokKapasitas = "kapasitas sumber daya terlampaui pada salah satu slot"
+	pesanBentrokBlokir    = "slot yang diminta diblokir"
+)
 
 func (s *Store) buatPeminjaman(w http.ResponseWriter, r *http.Request) {
 	var in peminjamanInput
@@ -19,6 +22,10 @@ func (s *Store) buatPeminjaman(w http.ResponseWriter, r *http.Request) {
 	p, sd, pesan := s.validasiPeminjaman(in)
 	if pesan != "" {
 		writeError(w, http.StatusBadRequest, pesan)
+		return
+	}
+	if s.bentrokDenganBlokir(p.SumberDayaID, p.Tanggal, p.SlotMulai, p.SlotSelesai) {
+		writeError(w, http.StatusConflict, pesanBentrokBlokir)
 		return
 	}
 	if s.kapasitasTerlampaui(p, sd.Stok) {
@@ -111,6 +118,10 @@ func (s *Store) ubahPeminjaman(w http.ResponseWriter, r *http.Request) {
 
 	p.ID = id
 	p.Status = s.peminjaman[i].Status
+	if s.bentrokDenganBlokir(p.SumberDayaID, p.Tanggal, p.SlotMulai, p.SlotSelesai) {
+		writeError(w, http.StatusConflict, pesanBentrokBlokir)
+		return
+	}
 	if p.Status == statusAktif && s.kapasitasTerlampaui(p, sd.Stok) {
 		writeError(w, http.StatusConflict, pesanBentrokKapasitas)
 		return
