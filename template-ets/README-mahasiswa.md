@@ -1,7 +1,7 @@
 # PinjamKampus API
 
-- Nama dan NRP:
-- Persona:
+- Nama dan NRP: Muhammad Ilham Akbar / 5053241009
+- Persona: 5
 - Cara menjalankan: `go run .` lalu buka http://localhost:8080
 
 ## Fitur
