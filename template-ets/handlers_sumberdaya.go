@@ -12,6 +12,9 @@ func (s *Store) buatSumberDaya(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, pesan)
 		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	sd.ID = s.nextSumberDayaID
 	s.nextSumberDayaID++
 	s.sumberDaya = append(s.sumberDaya, sd)
@@ -19,6 +22,8 @@ func (s *Store) buatSumberDaya(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Store) daftarSumberDaya(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	writeJSON(w, http.StatusOK, s.sumberDaya)
 }
 
@@ -27,6 +32,8 @@ func (s *Store) detailSumberDaya(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	sd, ada := s.cariSumberDaya(id)
 	if !ada {
 		writeError(w, http.StatusNotFound, "sumber daya tidak ditemukan")

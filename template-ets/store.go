@@ -1,6 +1,9 @@
 package main
 
+import "sync"
+
 type Store struct {
+	mu         sync.Mutex
 	sumberDaya []SumberDaya
 	peminjaman []Peminjaman
 
@@ -26,11 +29,11 @@ func (s *Store) cariSumberDaya(id int) (SumberDaya, bool) {
 	return SumberDaya{}, false
 }
 
-func (s *Store) cariPeminjaman(id int) (Peminjaman, bool) {
-	for _, p := range s.peminjaman {
+func (s *Store) indeksPeminjaman(id int) int {
+	for i, p := range s.peminjaman {
 		if p.ID == id {
-			return p, true
+			return i
 		}
 	}
-	return Peminjaman{}, false
+	return -1
 }

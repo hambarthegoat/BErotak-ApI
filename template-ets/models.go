@@ -1,6 +1,15 @@
 package main
 
-const statusAktif = "aktif"
+const (
+	statusAktif = "aktif"
+
+	jenisRuang = "ruang"
+	jenisAlat  = "alat"
+
+	slotMin        = 1
+	slotMax        = 8
+	maxPanjangNama = 50
+)
 
 type SumberDaya struct {
 	ID    int    `json:"id"`

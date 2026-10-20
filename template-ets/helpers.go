@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const errBodyTidakValid = "body harus berupa JSON object yang valid dengan tipe field yang benar"
+
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -25,10 +27,18 @@ func parseID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	return id, true
 }
 
+func parseJSON(r *http.Request, dst any) error {
+	return json.NewDecoder(r.Body).Decode(dst)
+}
+
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
-	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
-		writeError(w, http.StatusBadRequest, "body harus berupa JSON yang valid")
+	if err := parseJSON(r, dst); err != nil {
+		writeError(w, http.StatusBadRequest, errBodyTidakValid)
 		return false
 	}
 	return true
+}
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	writeError(w, http.StatusNotFound, "endpoint tidak ditemukan")
 }
